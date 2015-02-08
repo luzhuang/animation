@@ -11,18 +11,19 @@
 		           };
  		})();
 
- 		function Sprite(img,x,y,width,height,action){
- 			this.img = img;
+ 		function Sprite(src,x,y,width,height,action){
  			this.x = x;
  			this.y = y;
  			this.width = width;	
  			this.height = height;
+ 			this.size = Math.sqrt(width*width+height*height);
+ 			this.src = src;
  			this.action = action;
- 			this.inStage = false;
+ 			this.isTurn = false;
  			this.stage = {};
  			this.canvas = document.createElement('canvas');
- 			this.canvas.width = this.width;
- 			this.canvas.height= this.height;
+ 			this.canvas.width = this.size;
+ 			this.canvas.height= this.size;
 			this.ctx = this.canvas.getContext('2d');
  			this.init();
  		}
@@ -34,30 +35,72 @@
  					x = this.x,
  					y = this.y,
  					width = this.width,
- 					height = this.height;
+ 					height = this.height,
+ 					size = this.size;
+ 				ctx.translate(this.size/2,this.size/2);
  				var img = new Image();
- 				img.src = this.img;
-				img.onload = function(e){
-					ctx.fillStyle = '#000';
-					ctx.fillRect(0,0,width,height)
-					ctx.drawImage(img,0,0,width,height);
+ 				img.src = this.src;
+ 				this.img = img;
+				img.onload = function(){
+					ctx.drawImage(img,-width/2,-height/2,width,height);
 				}
  			},
  			move : function() {
- 				var action = this.action;
- 				var actionName = action.name;
- 				switch(actionName){
- 					case 'down':
- 						this.x += action.vx;
- 						this.y += action.vy;
- 						this.ctx.rotate((this.x%360)*Math.PI/180);
- 						console.log(this.x%360);
- 					break;
- 					case 'wave':
- 						this.y += action.vy;
- 						this.x += action.swing*Math.sin(this.y*action.f/10);
- 					break;
- 				}
+ 				var action = this.action,
+ 					actionName = action.name,
+ 					size = this.size,
+ 					width = this.width,
+ 					height = this.height,
+ 					ctx = this.ctx;
+				if (/down/i.test(actionName)){
+					this.y += action.vy;
+				}
+				if (/up/i.test(actionName)){
+					this.y -= action.vy;
+				}
+				if (/left/i.test(actionName)){
+					this.x -= action.vx;
+				}
+				if (/right/i.test(actionName)){
+					this.x += action.vx;
+				}
+				if (/wave/i.test(actionName)){
+					this.x += action.swing*Math.sin(this.y*action.f/10);
+				}
+				if (/rotate/i.test(actionName)){
+					ctx.clearRect(-size/2,-size/2,size,size);
+					ctx.rotate(action.angle*Math.PI/180);
+					ctx.drawImage(this.img,-width/2,-height/2,width,height);
+				}
+				if (/turnY/i.test(actionName)){
+					if (!this.isTurn) {
+						this.turn = this._turnY();
+						this.isTurn = true;
+					}
+					this.turn();
+				}
+ 			},
+ 			_turnY : function(){
+				var action = this.action,
+	 				width = this.width,
+	 				height = this.height,
+	 				size = this.size,
+	 				ctx = this.ctx,
+	 				img = this.img;
+	 			var scale = 1;
+ 				return (function(){
+ 					scale *= action.turn;
+	 				ctx.clearRect(-size/2,-size/2,size,size);
+ 					if (Math.abs(scale)<0.1){
+ 						action.turn = 1/action.turn;
+ 						ctx.scale(-1,1);
+ 					}
+ 					if (Math.abs(scale)>1){
+ 						action.turn = 1/action.turn;
+ 					}
+					ctx.scale(action.turn, 1);
+					ctx.drawImage(img,-width/2,-height/2,width,height);
+				});
  			},
  			getStage : function(){
  				return this.stage;
@@ -123,8 +166,14 @@
 						requestAnimationFrame(_onFrame);
 					}
 				}
-
 				requestAnimationFrame(_onFrame);
+			},
+			stop : function(){
+				this.state = "stop";
+			},
+			clear : function(){
+				this.state = "over"
+				this.ctx.clearRect(0,0,this.width,this.height);
 			},
 			getState : function(){
 				return this.state;
@@ -138,6 +187,7 @@
 					if (sprite.y < -sprite.height){
 						if (action.autoRefresh) {
 							sprite.y = height;
+							sprite.x = Math.random()*width;
 						}else{
 							sprites.splice(i,1);
 						}
@@ -145,6 +195,7 @@
 					if (sprite.y > height){
 						if (action.autoRefresh) {
 							sprite.y = -sprite.height;
+							sprite.x = Math.random()*width;
 						}else{
 							sprites.splice(i,1);
 						}
@@ -152,6 +203,7 @@
 					if (sprite.x < -sprite.width){
 						if (action.autoRefresh) {
 							sprite.x = width;
+							sprite.y = Math.random()*height;
 						}else{
 							sprites.splice(i,1);
 						}
@@ -159,6 +211,7 @@
 					if (sprite.x > width){
 						if (action.autoRefresh) {
 							sprite.x = -sprite.width;
+							sprite.x = Math.random()*height;
 						}else{
 							sprites.splice(i,1);
 						}

@@ -11,14 +11,15 @@
 			var canvasWidth = window.innerWidth;
 			var canvasHeight = window.innerHeight;
 			animation.init(100,100,canvasWidth,canvasHeight);
-			var num=1;
+			var num=20;
 			for (var i=0;i<num;++i){
 				var x = Math.random()*canvasWidth;
 				var y = Math.random()*canvasHeight;
 				var width = 50;
 				var height = 45;
 				var scale = Math.random()+0.2;
-				var sprite =animation.setSprite("img/snow.png",x,y,width*scale,height*scale,{name:'down',vx:-scale,vy:scale,autoRefresh:true});
+				var sprite =animation.setSprite("img/2.jpg",x,y,width*scale,height*scale,
+					{name:'down',turn:0.9,vx:scale,vy:scale,angle:3*scale,swing:3*scale,f:.1*scale,autoRefresh:true});
 			}
 			animation.start();
 		}
