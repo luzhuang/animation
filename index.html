@@ -7,8 +7,19 @@
 	<script src="js/animation.js"></script>
 	<script>
 		window.onload = function(){
-			animation.setSprite("img/bg.jpg",10,10,100,100);
-			animation.setSprite("img/bg.jpg",100,100,200,100);
+			// var bg = animation.setSprite("img/bg.jpg");
+			var canvasWidth = window.innerWidth;
+			var canvasHeight = window.innerHeight;
+			animation.init(100,100,canvasWidth,canvasHeight);
+			var num=1;
+			for (var i=0;i<num;++i){
+				var x = Math.random()*canvasWidth;
+				var y = Math.random()*canvasHeight;
+				var width = 50;
+				var height = 45;
+				var scale = Math.random()+0.2;
+				var sprite =animation.setSprite("img/snow.png",x,y,width*scale,height*scale,{name:'down',vx:-scale,vy:scale,autoRefresh:true});
+			}
 			animation.start();
 		}
 	</script>
