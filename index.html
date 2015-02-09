@@ -51,8 +51,11 @@
 						x = $.pathList[indexP].x,
 						y = $.pathList[indexP].y;
 					var scale = Math.random()+0.2;
+					var p1 = {x:Math.random()*10-5,y:Math.random()*10-5};
+					var p2 = {x:Math.random()*10-5,y:Math.random()*10-5};
+					var p3 = {x:Math.random()*10-5,y:Math.random()*10-5};
 					$.setSprite(list[index].img,x,y,list[index].width*2,list[index].height*2,
-								{name:'bezier',p1:{x:1,y:2},p2:{x:1,y:-2},p3:{x:-1,y:2},angle:scale,autoRefresh:true});
+								{name:'bezier',t:0,p1:p1,p2:p2,p3:p3,angle:scale,autoRefresh:true});
 				}
 			});
 			animation.start();

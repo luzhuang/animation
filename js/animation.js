@@ -74,16 +74,13 @@
 				}
 				if (/bezier/i.test(actionName)){
 					var x = this.x,
-						y = this.y,
-						action = this.action;
-						// console.log(1);
+						y = this.y;
 					this.action.t += 1/60;
-					console.log(action.p2.y);
 					this.x = Math.pow((1-action.t),3)*x+3*action.t*Math.pow((1-action.t),2)*(x+action.p1.x)+3*Math.pow(action.t,2)*(1-action.t)*(x+action.p2.x)+(x+action.p3.x)*Math.pow(action.t,3);
 					this.y = Math.pow((1-action.t),3)*y+3*action.t*Math.pow((1-action.t),2)*(y+action.p1.y)+3*Math.pow(action.t,2)*(1-action.t)*(y+action.p2.y)+(y+action.p3.y)*Math.pow(action.t,3);
-					if (this.action.t > 1 || this.y>this.stage.height) {
+					if (this.action.t > 1) {
 						// console.log(this.action.t,this.stage.height);
-						this.action.t = 0;
+						this.action.t = 0.2;
 					}
 				}
 				if (/turnY/i.test(actionName)){
