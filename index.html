@@ -7,21 +7,66 @@
 	<script src="js/animation.js"></script>
 	<script>
 		window.onload = function(){
-			// var bg = animation.setSprite("img/bg.jpg");
-			var canvasWidth = window.innerWidth;
-			var canvasHeight = window.innerHeight;
-			animation.init(100,100,canvasWidth,canvasHeight);
-			var num=20;
-			for (var i=0;i<num;++i){
-				var x = Math.random()*canvasWidth;
-				var y = Math.random()*canvasHeight;
-				var width = 50;
-				var height = 45;
-				var scale = Math.random()+0.2;
-				var sprite =animation.setSprite("img/2.jpg",x,y,width*scale,height*scale,
-					{name:'down',turn:0.9,vx:scale,vy:scale,angle:3*scale,swing:3*scale,f:.1*scale,autoRefresh:true});
-			}
+			var $ = animation;
+			$.resource.push('r1','img/右侧花枝1.png');
+			$.resource.push('r2','img/右侧花枝2.png');
+			$.resource.push('r3','img/右侧花枝3.png');
+			$.resource.push('l1','img/左侧花枝1.png');
+			$.resource.push('l2','img/左侧花枝2.png');
+			$.resource.push('l3','img/左侧花枝3.png');
+			$.resource.push('h1','img/花朵1.png');
+			$.resource.push('h2','img/花朵2.png');
+			// $.resource.push('h3','img/花朵3.png');
+			// $.resource.push('h4','img/花朵4.png');
+			// $.resource.push('h5','img/花朵5.png');
+			$.load();
+			$.init(0,0,window.innerWidth,window.innerHeight,function(){
+				var flowerNum = 20;
+				var list = $.resourceList;
+				var r1 = list['r1']; r1.x = window.innerWidth-r1.width;r1.y = 0;
+				var	r2 = list['r2']; r2.x = window.innerWidth-r2.width;r2.y = 100;
+				var	r3 = list['r3']; r3.x = window.innerWidth-r3.width;r3.y = 200;
+				var	l1 = list['l1']; l1.x = 0;l1.y = 0;
+				var	l2 = list['l2']; l2.x = 0;l2.y = 100;
+				var	l3 = list['l3']; l3.x = 0;l3.y = 200;
+				$.setSprite(r1.img,r1.x,r1.y,r1.width,r1.height);
+				$.setSprite(r2.img,r2.x,r2.y,r2.width,r2.height);
+				$.setSprite(r3.img,r3.x,r3.y,r3.width,r3.height);
+				$.setSprite(l1.img,l1.x,l1.y,l1.width,l1.height);
+				$.setSprite(l2.img,l2.x,l2.y,l2.width,l2.height);
+				$.setSprite(l3.img,l3.x,l3.y,l3.width,l3.height);
+				for (var i=1;i<=3;++i){
+					$.addPathPoint({x:list['r'+i].x+45,y:list['r'+i].y+20});
+					$.addPathPoint({x:list['r'+i].x+38,y:list['r'+i].y+45});
+					$.addPathPoint({x:list['r'+i].x+38,y:list['r'+i].y+45});
+					$.addPathPoint({x:list['l'+i].x+40,y:list['l'+i].y+40});
+					$.addPathPoint({x:list['l'+i].x+45,y:list['l'+i].y+100});
+					$.addPathPoint({x:list['l'+i].x+15,y:list['l'+i].y+115});
+				}
+				
+
+				for (var i=0;i<flowerNum;++i) {
+					var index = 'h'+((Math.random()*2+1)>>0),
+						indexP = Math.random()*$.pathList.length>>0,
+						x = $.pathList[indexP].x,
+						y = $.pathList[indexP].y;
+					var scale = Math.random()+0.2;
+					$.setSprite(list[index].img,x,y,list[index].width*2,list[index].height*2,
+								{name:'bezier',p1:{x:1,y:2},p2:{x:1,y:-2},p3:{x:-1,y:2},angle:scale,autoRefresh:true});
+				}
+			});
 			animation.start();
+			// console.log(resourceList);
+			// var num=10;
+			// for (var i=0;i<num;++i){
+			// 	var x = Math.random()*1000+200;
+			// 	var y = x/2;
+			// 	var width = 50;
+			// 	var height = 45;
+			// 	var scale = Math.random()+0.2;
+			// 	var sprite =animation.setSprite("img/snow.png",x,y,width*scale,height*scale,
+			// 		{name:'downwaverotate',angle:scale,vy:2*scale,swing:2*scale,f:.1*scale,autoRefresh:true});
+			// }
 		}
 	</script>
 </head>
