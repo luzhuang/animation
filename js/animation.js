@@ -65,7 +65,12 @@
 					this.x += action.vx;
 				}
 				if (/wave/i.test(actionName)){
-					this.x += action.swing*Math.sin(this.y*action.f/10);
+					var delta = this.y*action.f/10;
+					var random = Math.random()*100>>0;
+					if (random % 45 ===0) {
+						action.swing = ((Math.random()-0.5)+action.swing)%3;
+					}
+					this.x += action.swing*Math.sin(delta);
 				}
 				if (/rotate/i.test(actionName)){
 					ctx.clearRect(-size/2,-size/2,size,size);
@@ -73,14 +78,33 @@
 					ctx.drawImage(this.img,-width/2,-height/2,width,height);
 				}
 				if (/bezier/i.test(actionName)){
-					var x = this.x,
-						y = this.y;
-					this.action.t += 1/60;
-					this.x = Math.pow((1-action.t),3)*x+3*action.t*Math.pow((1-action.t),2)*(x+action.p1.x)+3*Math.pow(action.t,2)*(1-action.t)*(x+action.p2.x)+(x+action.p3.x)*Math.pow(action.t,3);
-					this.y = Math.pow((1-action.t),3)*y+3*action.t*Math.pow((1-action.t),2)*(y+action.p1.y)+3*Math.pow(action.t,2)*(1-action.t)*(y+action.p2.y)+(y+action.p3.y)*Math.pow(action.t,3);
-					if (this.action.t > 1) {
-						// console.log(this.action.t,this.stage.height);
-						this.action.t = 0.2;
+					var action = this.action,
+						p0 = this.action.p0,
+						p1 = this.action.p1,
+						p2 = this.action.p2,
+						p3 = this.action.p3;
+					var scale = Math.random()+0.2;
+					this.action.t += 1/200;
+					if (this.action.t >= 1) {
+						this.action.p0 = {x:this.x,y:this.y};
+						this.action.p1 = {x:-scale*300,y:50+100*scale};
+						this.action.p2 = {x:scale*300,y:150+100*scale};
+						this.action.t -= 1;
+					}else{ 
+						this.x = Math.pow((1-action.t),3)*p0.x+3*action.t*Math.pow((1-action.t),2)*(p0.x+p1.x)+3*Math.pow(action.t,2)*(1-action.t)*(p0.x+p2.x)+(p0.x+p3.x)*Math.pow(action.t,3);
+						this.y = Math.pow((1-action.t),3)*p0.y+3*action.t*Math.pow((1-action.t),2)*(p0.y+p1.y)+3*Math.pow(action.t,2)*(1-action.t)*(p0.y+p2.y)+(p0.y+p3.y)*Math.pow(action.t,3);
+					}
+				}
+				if (/transparent/i.test(actionName)){
+					var opacityStart = this.action.opacityStart,
+						allLength = opacityStart,
+						dest = this.stage.height - opacityStart;
+					if (this.y > dest) {
+						var moveLength = this.y - dest;
+						var delta = moveLength/allLength;
+						this.ctx.globalAlpha = 1 - delta-0.1;
+					}else{
+						this.ctx.globalAlpha = 1;
 					}
 				}
 				if (/turnY/i.test(actionName)){
@@ -96,6 +120,11 @@
 						this.isTurn = true;
 					}
 					this.turn();
+				}
+				if (/transform/i.test(actionName)){
+					// this.canvas.width = 200;
+					// this.canvas.height = 200;
+					// this.ctx.scale(1.1,1.1);
 				}
  			},
  			_turnY : function(){
@@ -254,9 +283,8 @@
 					var action = this.sprites[i].action;
 					if (sprite.y < -sprite.height || sprite.y > height){
 						if (action.autoRefresh) {
-							var indexP = Math.random()*this.pathList.length>>0;
-							sprite.x = this.pathList[indexP].x,
-							sprite.y = this.pathList[indexP].y;
+							sprite.x = this.sprites[i].originX;
+							sprite.y = this.sprites[i].originY;
 						}else{
 							// sprites.splice(i,1);
 						}
