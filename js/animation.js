@@ -67,9 +67,10 @@
 				if (/wave/i.test(actionName)){
 					var delta = this.y*action.f/10;
 					var random = Math.random()*100>>0;
-					if (random % 45 ===0) {
-						action.swing = ((Math.random()-0.5)+action.swing)%3;
+					if (random % 99 ===0) {
+						action.swing = Math.random()-0.5+action.swing;
 					}
+					action.swing = action.swing % 3;
 					this.x += action.swing*Math.sin(delta);
 				}
 				if (/rotate/i.test(actionName)){
