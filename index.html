@@ -7,62 +7,73 @@
 	<script src="js/animation.js"></script>
 	<script>
 		window.onload = function(){
-			var $ = animation;
-			$.resource.push('r1','img/右侧花枝1.png');
-			$.resource.push('r2','img/右侧花枝2.png');
-			$.resource.push('r3','img/右侧花枝3.png');
-			$.resource.push('l1','img/左侧花枝1.png');
-			$.resource.push('l2','img/左侧花枝2.png');
-			$.resource.push('l3','img/左侧花枝3.png');
-			$.resource.push('h1','img/花朵1.png');
-			$.resource.push('h2','img/花朵2.png');
-			// $.resource.push('h3','img/花朵3.png');
-			// $.resource.push('h4','img/花朵4.png');
-			// $.resource.push('h5','img/花朵5.png');
-			$.load();
-			$.init(0,0,window.innerWidth,window.innerHeight,function(){
-				var flowerNum = 10;
-				var list = $.resourceList;
-				var r1 = list['r1']; r1.x = window.innerWidth-r1.width;r1.y = 0;
-				var	r2 = list['r2']; r2.x = window.innerWidth-r2.width;r2.y = 100;
-				var	r3 = list['r3']; r3.x = window.innerWidth-r3.width;r3.y = 200;
-				var	l1 = list['l1']; l1.x = 0;l1.y = 0;
-				var	l2 = list['l2']; l2.x = 0;l2.y = 100;
-				var	l3 = list['l3']; l3.x = 0;l3.y = 200;
-				$.setSprite(r1.img,r1.x,r1.y,r1.width,r1.height);
-				$.setSprite(r2.img,r2.x,r2.y,r2.width,r2.height);
-				$.setSprite(r3.img,r3.x,r3.y,r3.width,r3.height);
-				$.setSprite(l1.img,l1.x,l1.y,l1.width,l1.height);
-				$.setSprite(l2.img,l2.x,l2.y,l2.width,l2.height);
-				$.setSprite(l3.img,l3.x,l3.y,l3.width,l3.height);
+			var loadQueue = new LoadQueue();
+			loadQueue.addResource('l1','img/左侧花枝1.png');
+			loadQueue.addResource('l2','img/左侧花枝2.png');
+			loadQueue.addResource('l3','img/左侧花枝3.png');
+			loadQueue.addResource('r1','img/右侧花枝1.png');
+			loadQueue.addResource('r2','img/右侧花枝2.png');
+			loadQueue.addResource('r3','img/右侧花枝3.png');
+			loadQueue.addResource('h1','img/花朵1.png');
+			loadQueue.addResource('h2','img/花朵2.png');
+			loadQueue.load(function(res){
+				var scene = new Scene(0,0,window.innerWidth,window.innerHeight);
+				var layers = [];
+					layers[1] = new Layer(1),
+					layers[2] = new Layer(2),
+					layers[3] = new Layer(3);
 				for (var i=1;i<=3;++i){
-					$.addPathPoint({x:list['r'+i].x+45,y:list['r'+i].y+20});
-					$.addPathPoint({x:list['r'+i].x+38,y:list['r'+i].y+45});
-					$.addPathPoint({x:list['r'+i].x+38,y:list['r'+i].y+45});
+					var ri = 'r'+i,
+						li = 'l'+i;
+					var l = new Sprite(res[li],0,100*(i-1),res[li].width/2,res[li].height/2),
+						r = new Sprite(res[ri],window.innerWidth-res[ri].width/2,100*(i-1),res[ri].width/2,res[ri].height/2);
+					layers[i].addSprite(l);
+					layers[i].addSprite(r);
+					layers[i].addPoint({x:l.x+40,y:l.y+40});
+					layers[i].addPoint({x:l.x+45,y:l.y+100});
+					layers[i].addPoint({x:l.x+15,y:l.y+115});
+					layers[i].addPoint({x:r.x+38,y:r.y+20});
+					layers[i].addPoint({x:r.x+40,y:r.y+45});
+					layers[i].addPoint({x:r.x+15,y:r.y+45});
+				}
+				var flowerNum = 20;
+				for (var i=0;i<flowerNum;++i){
+					var scale = Math.random()+0.6;
+					var hi = 'h'+((Math.random()*2+1)>>0);
+					var layeri = (Math.random()*3+1)>>0;
+					var pi=(Math.random()*6)>>0;
+					h = new Sprite(res[hi],layers[layeri].pointList[pi].x,layers[layeri].pointList[pi].y,res[hi].width*scale,res[hi].height*scale,
+						{name:'func rotate transparent',vy:scale,path:null,pathIndex:0,angle:scale,
+						func:function(obj,action){
+							var swing = 20;
+							var f = [];
+							f[0] = function (x) {return 1/obj.size*swing*Math.sin(x/obj.size)};
+							f[1] = function (x) {return 1/obj.size*swing*Math.cos(x/obj.size)};
+							f[2] = function (x) {return -1/obj.size*swing*Math.cos(x/obj.size)};
+							f[3] = function (x) {return -1/obj.size*swing*Math.sin(x/obj.size)};
+							// f[4] = function (x) {return action.vy/2};
+							// f[5] = function (x) {return -action.vy/2};
+							if (!action.path) {
+								var index = (Math.random()*f.length)>>0;
+								action.path = f[index];
+								action.pathIndex = index;
+							}
+							for (var i=0,l=f.length;i<l;++i) {
+								if ((action.path(obj.y))>>0 == (f[i](obj.y))>>0 && action.pathIndex != i){
+									action.pathIndex = i;
+									action.path=f[action.pathIndex]
+									break;
+								}
+							}
+							return action.path(obj.y);
+						},opacityStart:200,autoRefresh:true});
+					layers[layeri].addSprite(h);
 				}
 				for (var i=1;i<=3;++i){
-					$.addPathPoint({x:list['l'+i].x+40,y:list['l'+i].y+40});
-					$.addPathPoint({x:list['l'+i].x+45,y:list['l'+i].y+100});
-					$.addPathPoint({x:list['l'+i].x+15,y:list['l'+i].y+115});
-				}	
-				for (var i=0;i<flowerNum;++i) {
-					var index = 'h'+((Math.random()*2+1)>>0),
-						indexP = Math.random()*$.pathList.length>>0,
-						x = $.pathList[indexP].x,
-						y = $.pathList[indexP].y;
-					var scale = Math.random()+0.4;
-					$.setSprite(list[index].img,x,y,list[index].width*2,list[index].height*2,
-								{name:'downwaverotatetransparenttransform',vx:.5*scale,vy:.9*scale,angle:scale,swing:scale,f:.6*scale,
-																  opacityStart:200,autoRefresh:true});
-					// $.setSprite(list[index].img,x,y,list[index].width*2,list[index].height*2,
-					// 			{name:'bezier',t:scale,
-					// 						   p0:{x:x,y:y},
-					// 						   p1:{x:-scale*300,y:50+100*scale},
-					// 						   p2:{x:scale*300,y:150+100*scale},
-					// 						   p3:{x:0,y:300},autoRefresh:true});
+					scene.addLayer(layers[i]);
 				}
+				scene.start();
 			});
-			animation.start();
 		}
 	</script>
 </head>
