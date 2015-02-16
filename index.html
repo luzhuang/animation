@@ -41,7 +41,7 @@
 					var hi = 'h'+((Math.random()*2+1)>>0);
 					var layeri = (Math.random()*3+1)>>0;
 					var pi=(Math.random()*6)>>0;
-					var scale = Math.random()*0.2+0.8;
+					var scale = Math.random()*0.5+0.5;
 					// var h = new Sprite(res[hi],layers[layeri].pointList[pi].x,layers[layeri].pointList[pi].y,res[hi].width*scale,res[hi].height*scale,
 					// 	{name:'func rotate transparent',vy:scale,path:null,pathIndex:0,angle:scale,
 					// 	func:function(obj,action){
@@ -68,7 +68,7 @@
 					// 		return action.path(obj.y);
 					// 	},opacityStart:200,autoRefresh:true});
 					var h = new Sprite(res[hi],layers[layeri].pointList[pi].x,layers[layeri].pointList[pi].y,res[hi].width*scale,res[hi].height*scale,
-						{name:'downtransparentrotate',opacityStart:200,autoRefresh:true});
+						{name:'downwavetransparentrotate',opacityStart:200,autoRefresh:true});
 					layers[layeri].addSprite(h);
 				}
 				for (var i=1;i<=3;++i){

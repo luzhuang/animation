@@ -24,7 +24,7 @@
  			this.action = action || {name:'stay'};
  			this.parent = {};
  			this._index = 0;
- 			this.init();
+ 			this.v = {x:0,y:0};
  		}
 
  		Sprite.prototype = {
@@ -38,19 +38,30 @@
  					size = this.size;
 					img = this.img;
 				this.size = Math.sqrt(width*width+height*height);
-	 			this.v = {x:0,y:this.size};	
-	 			this.canvas.width = this.size;
-	 			this.canvas.height= this.size;
- 				if (this.action.name != 'stay') {
-	 				ctx.translate(this.size/2,this.size/2);
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				}else{
-					ctx.drawImage(img,0,0,width,height);
-				}
+		 		this.canvas.width = this.size;
+	 			this.canvas.height= this.size;	
+	 			ctx.translate(this.size/2,this.size/2);
+	 			this.v = {x:0,y:this.size};
+	 			this._draw();
  			},
  			move : function() {
  				var action = this.action;
  				this._runAction(action.name);
+ 			},
+ 			_draw : function(){
+ 				var ctx = this.ctx,
+ 					x = this.x,
+ 					y = this.y,
+ 					width = this.width,
+ 					height = this.height,
+ 					size = this.size;
+					img = this.img;
+				ctx.clearRect(-size/2,-size/2,size,size);
+ 				if (this.action.name != 'stay') {
+					ctx.drawImage(img,-width/2,-height/2,width,height);
+				}else{
+					ctx.drawImage(img,-size/2,-size/2,width,height);
+				}
  			},
  			_turnY : function(){
 				var action = this.action,
@@ -114,11 +125,15 @@
  					this.y += v.y/40;
  					v.x += a/this.width;
  					this.x += v.x/40;
+ 					this.originX += v.x/40;
+ 				}
+ 				if (/wave/i.test(actionName)){
+ 					this.x = this.originX + 50*Math.sin(this.y/50);
  				}
 				if (/rotate/i.test(actionName)){
-					ctx.clearRect(-size/2,-size/2,size,size);;
 					ctx.rotate(20/this.v.y*Math.PI/180);
-					ctx.drawImage(this.img,-width/2,-height/2,width,height);
+					this.rotate = 20/this.v.y*Math.PI/180;
+					this._draw();	
 				}
 				if (/bezier/i.test(actionName)){
 					var action = this.action,
@@ -167,88 +182,100 @@
 					this.turn();
 				}
 				if (/transform/i.test(actionName)){
-					if (Math.random()*100>>0 == 99){
-						var layers = this.parent.parent.layers;
-						var index = this.parent.index;
-						this.parent.removeSpirte(this._index);
-						while(!layers[index%(layers.length-1)+1]) {
-							index++;
-						}
-						index = index%(layers.length-1)+1;
-						console.log(index);
-						layers[index].addSprite(this);
-					}
+					// if (Math.random()*100>>0 == 99){
+					// 	// this.parent.removeSpirte(this._index);
+					// 	// var layers = this.parent.parent.layers;
+					// 	// var index = this.parent.index;
+					// 	// while(!layers[index%(layers.length-1)+1]) {
+					// 	// 	index++;
+					// 	// }
+					// 	// index = index%(layers.length-1)+1;
+					// 	// layers[index].addSprite(this);
+					// 	// console.log(layers[index]);
+					// 	this.init();
+					// }
 				}
  			}
  		};
 
  		function Layer(index,x,y,width,height){
- 			this.canvas = document.createElement('canvas');
-			this.ctx = this.canvas.getContext('2d');
  			this.sprites  = [];
  			this.pointList = [];
  			this.index = index;
  			this.x = x || 0;
  			this.y = y || 0;
- 			this.width = this.canvas.width = width || window.innerWidth;
- 			this.height = this.canvas.height= height || window.innerHeight;
- 			this.parent = {};
  			this.a = 0;
  			this.g = 0;
  		}
 
  		Layer.prototype = {
  			addSprite : function(sprite){
- 				sprite.parent = this;
- 				sprite._index=this.sprites.length;
- 				sprite.size *= this.index/2;
- 				this.sprites.push(sprite);
+ 				var joined = false;
+ 				for (var i=0,l=this.sprites.length;i<l;++i){
+ 					if (!this.sprites[i]){
+		 				sprite._index=i;
+ 						this.sprites[i] = sprite;
+		 				joined = true;
+ 					}
+ 				}
+ 				if (!joined){
+					sprite._index=this.sprites.length;
+ 					this.sprites.push(sprite);
+ 				}
+				sprite.parent = this;
+ 				sprite.width *= this.index/2;
+ 				sprite.height *= this.index/2;
+ 				sprite.init();
  			},
  			removeSpirte : function(index){
- 				this.sprites.splice(index,1);
+ 				this.sprites[index] = null;
  			},
  			addPoint : function(p){
 				this.pointList.push(p);
 			},
-			_addSpritesToLayer : function(){
-				var ctx = this.ctx;
+			_addSpritesToLayer : function(ctx){
 				for (var i=0,l=this.sprites.length;i<l;i++){
 					var sprite = this.sprites[i];
-					var that = this;
-					(function(sprite){
-						ctx.drawImage(sprite.canvas,sprite.x,sprite.y,sprite.size,sprite.size);
-					})(sprite);
+					if (sprite) {
+						var that = this;
+						(function(sprite){
+							ctx.drawImage(sprite.canvas,sprite.x,sprite.y,sprite.size,sprite.size);
+						})(sprite);
+					}
 				}
 			},
 			_autoClear : function(sprites){
 				for (var i=0,l=this.sprites.length;i<l;++i) {
-					var width = this.width,
-						x = this.x,
+					var x = this.x,
 						y = this.y,
-						height = this.height,
 						sprite = this.sprites[i],
-						action = this.sprites[i].action;
-		
-					if (sprite.y < -sprite.size || sprite.y > height){
-						if (action.autoRefresh) {
-							sprite.x = sprite.originX;
-							sprite.y = sprite.originY;
-							sprite.v = {x:0,y:sprite.size};
-						}else{
-							sprites.splice(i,0);
-							i--;
-							l--;
+						action = sprite ? sprite.action : null;
+					if (sprite){
+						if (sprite.y < -sprite.size || sprite.y > this.parent.height){
+							if (action.autoRefresh) {
+								action.autoRefresh = false;
+								var pi=(Math.random()*6)>>0;
+								sprite.x = sprite.originX = this.pointList[pi].x;
+								sprite.y = sprite.originY = this.pointList[pi].y;
+								sprite.v = {x:0,y:sprite.size};
+								action.autoRefresh = true;
+							}else{
+								sprites.splice(i,0);
+								i--;
+								l--;
+							}
 						}
 					}
 				}
 			},
-			_onFrame : function(){
-				this.ctx.clearRect(0,0,this.width,this.height);
+			_onFrame : function(ctx){
 				for (var i=0,l=this.sprites.length;i<l;++i) {
-					this.sprites[i].move();
+					if (this.sprites[i]){
+						this.sprites[i].move();
+					}
 				}
 				this._autoClear(this.sprites);
-				this._addSpritesToLayer();
+				this._addSpritesToLayer(ctx);
 			}
  		};
 
@@ -283,7 +310,7 @@
 					if (that.state == "start") {
 						if (t - lastTime > 1000) {
 							that.a = Math.random()*10-5;
-							that.g = Math.random()*3-1;
+							that.g = Math.random()*6-2.5;
 							for (var i=0;i<that.layers.length;++i){
 								if (that.layers[i]) {
 									that.layers[i].a = that.a*that.layers[i].index;
@@ -300,8 +327,7 @@
 						ctx.clearRect(0,0,that.width,that.height);
 						for (var index in that.layers){
 							var layer = that.layers[index]
-							layer._onFrame();
-							ctx.drawImage(layer.canvas,layer.x,layer.y,layer.width,layer.height);
+							layer._onFrame(ctx);
 						}
 						requestAnimationFrame(_onFrame);
 					}
