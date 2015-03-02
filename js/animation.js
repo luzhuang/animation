@@ -11,7 +11,7 @@
 		           };
  		})();
 
- 		function Sprite(img,x,y,width,height,action){
+ 		function Sprite(img,x,y,width,height,scale,action){
  			this.canvas = document.createElement('canvas');
 			this.ctx = this.canvas.getContext('2d');
  			this.x = this.originX = x;
@@ -25,6 +25,8 @@
  			this.parent = {};
  			this._index = 0;
  			this.v = {x:0,y:0};
+ 			this.state = null;
+ 			this.init();
  		}
 
  		Sprite.prototype = {
@@ -35,82 +37,22 @@
  					y = this.y,
  					width = this.width,
  					height = this.height,
- 					size = this.size;
 					img = this.img;
-				this.size = Math.sqrt(width*width+height*height);
+				this.size = this.originSize = Math.sqrt(width*width+height*height);
 		 		this.canvas.width = this.size;
 	 			this.canvas.height= this.size;	
 	 			ctx.translate(this.size/2,this.size/2);
 	 			this.v = {x:0,y:this.size};
 	 			this._draw();
+	 			var that = this;
+	 			var defer = Math.random()*3000;
+	 			setTimeout(function(){
+	 				that.state = "run";
+	 			},defer);
  			},
  			move : function() {
- 				var action = this.action;
- 				this._runAction(action.name);
- 			},
- 			_draw : function(){
- 				var ctx = this.ctx,
- 					x = this.x,
- 					y = this.y,
- 					width = this.width,
- 					height = this.height,
- 					size = this.size;
-					img = this.img;
-				ctx.clearRect(-size/2,-size/2,size,size);
- 				if (this.action.name != 'stay') {
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				}else{
-					ctx.drawImage(img,-size/2,-size/2,width,height);
-				}
- 			},
- 			_turnY : function(){
-				var action = this.action,
-	 				width = this.width,
-	 				height = this.height,
-	 				size = this.size,
-	 				ctx = this.ctx,
-	 				img = this.img;
-	 			var scale = 1;
- 				return (function(){
- 					scale *= action.turn;
-	 				ctx.clearRect(-size/2,-size/2,size,size);
- 					if (Math.abs(scale)<0.1){
- 						action.turn = 1/action.turn;
- 						ctx.scale(-1,1);
- 					}
- 					if (Math.abs(scale)>1){
- 						action.turn = 1/action.turn;
- 					}
-					ctx.scale(action.turn, 1);
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				});
- 			},
- 			_turnX : function(){
-				var action = this.action,
-	 				width = this.width,
-	 				height = this.height,
-	 				size = this.size,
-	 				ctx = this.ctx,
-	 				img = this.img;
-	 			var scale = 1;
- 				return (function(){
- 					scale *= action.turn;
-	 				ctx.clearRect(-size/2,-size/2,size,size);
- 					if (Math.abs(scale)<0.1){
- 						action.turn = 1/action.turn;
- 						ctx.scale(1,-1);
- 					}
- 					if (Math.abs(scale)>1){
- 						action.turn = 1/action.turn;
- 					}
-					ctx.scale(1, action.turn);
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				});
- 			},
- 			getLayer : function(){
- 				return this.parent;
- 			},
- 			_runAction : function(){
+ 				if (this.state != 'run')
+ 					return
 				var action = this.action,
 				actionName = action.name,
 				size = this.size,
@@ -121,18 +63,20 @@
 					g = this.g = this.parent.g,
 					ctx = this.ctx;
  				if (/down/i.test(actionName)){
- 					v.y += g/this.width;
+ 					v.y += g/this.size;
  					this.y += v.y/40;
- 					v.x += a/this.width;
+ 					v.x += a/this.size;
  					this.x += v.x/40;
  					this.originX += v.x/40;
  				}
  				if (/wave/i.test(actionName)){
- 					this.x = this.originX + 50*Math.sin(this.y/50);
+ 						if (action.wave > 0)
+ 							this.x = this.originX + 50*Math.sin((this.y-this.originY)/50);
+ 						else
+ 							this.x = this.originX - 50*Math.sin((this.y-this.originY)/50);
  				}
 				if (/rotate/i.test(actionName)){
-					ctx.rotate(20/this.v.y*Math.PI/180);
-					this.rotate = 20/this.v.y*Math.PI/180;
+					ctx.rotate(20/this.size*Math.PI/180);
 					this._draw();	
 				}
 				if (/bezier/i.test(actionName)){
@@ -158,7 +102,7 @@
 				if (/transparent/i.test(actionName)){
 					var opacityStart = this.action.opacityStart,
 						allLength = opacityStart,
-						dest = this.parent.height - opacityStart;
+						dest = this.parent.parent.height - opacityStart;
 					if (this.y > dest) {
 						var moveLength = this.y - dest;
 						var delta = moveLength/allLength;
@@ -182,28 +126,95 @@
 					this.turn();
 				}
 				if (/transform/i.test(actionName)){
-					// if (Math.random()*100>>0 == 99){
-					// 	// this.parent.removeSpirte(this._index);
-					// 	// var layers = this.parent.parent.layers;
-					// 	// var index = this.parent.index;
-					// 	// while(!layers[index%(layers.length-1)+1]) {
-					// 	// 	index++;
-					// 	// }
-					// 	// index = index%(layers.length-1)+1;
-					// 	// layers[index].addSprite(this);
-					// 	// console.log(layers[index]);
-					// 	this.init();
-					// }
+					this.size += action.transform;
+					if (this.size < this.originSize/2 || this.size > this.originSize*1.50)
+						action.transform = -action.transform;
+					// if (this.size > this.originSize/2 && this.size < this.originSize/1.5)
+					// 	this.changeLayer(1);
+					// if (this.size > this.originSize/1.5 && this.size < this.originSize)
+					// 	this.changeLayer(2);
+					// if (this.size > this.originSize && this.size < this.originSize*1.5)
+					// 	this.changeLayer(3);
 				}
+ 			},
+ 			changeState : function(state){
+ 				this.state = state;
+ 			},
+ 			clear : function(){
+ 				var ctx = this.ctx,
+ 				size = this.size;
+ 				ctx.clearRect(-size,-size,size*2,size*2);
+ 			},
+ 			changeLayer : function(index){
+				this.parent.removeSpirte(this);
+				this.parent.parent.layers[index].addSprite(this);
+ 			},
+ 			_draw : function(){
+ 				var ctx = this.ctx,
+ 					width = this.width,
+ 					height = this.height,
+ 					size = this.size,
+					img = this.img;
+				this.clear();
+ 				if (this.action.name != 'stay') {
+					ctx.drawImage(img,-width/2,-height/2,width,height);
+				}else{
+					ctx.drawImage(img,-size/2,-size/2,width,height);
+				}
+ 			},
+ 			_turnY : function(){
+				var action = this.action,
+	 				width = this.width,
+	 				height = this.height,
+	 				size = this.size,
+	 				ctx = this.ctx,
+	 				img = this.img;
+	 			var scale = 1;
+ 				return (function(){
+ 					scale *= action.turn;
+	 				this.clear();
+ 					if (Math.abs(scale)<0.1){
+ 						action.turn = 1/action.turn;
+ 						ctx.scale(-1,1);
+ 					}
+ 					if (Math.abs(scale)>1){
+ 						action.turn = 1/action.turn;
+ 					}
+					ctx.scale(action.turn, 1);
+					ctx.drawImage(img,-width/2,-height/2,width,height);
+				});
+ 			},
+ 			_turnX : function(){
+				var action = this.action,
+	 				width = this.width,
+	 				height = this.height,
+	 				size = this.size,
+	 				ctx = this.ctx,
+	 				img = this.img;
+	 			var scale = 1;
+ 				return (function(){
+ 					scale *= action.turn;
+	 				this.clear();
+ 					if (Math.abs(scale)<0.1){
+ 						action.turn = 1/action.turn;
+ 						ctx.scale(1,-1);
+ 					}
+ 					if (Math.abs(scale)>1){
+ 						action.turn = 1/action.turn;
+ 					}
+					ctx.scale(1, action.turn);
+					ctx.drawImage(img,-width/2,-height/2,width,height);
+				});
+ 			},
+ 			getLayer : function(){
+ 				return this.parent;
  			}
  		};
 
- 		function Layer(index,x,y,width,height){
+ 		function Layer(index){
  			this.sprites  = [];
  			this.pointList = [];
  			this.index = index;
- 			this.x = x || 0;
- 			this.y = y || 0;
  			this.a = 0;
  			this.g = 0;
  		}
@@ -216,19 +227,17 @@
 		 				sprite._index=i;
  						this.sprites[i] = sprite;
 		 				joined = true;
+		 				break;
  					}
  				}
  				if (!joined){
 					sprite._index=this.sprites.length;
- 					this.sprites.push(sprite);
+ 				 	this.sprites.push(sprite);
  				}
 				sprite.parent = this;
- 				sprite.width *= this.index/2;
- 				sprite.height *= this.index/2;
- 				sprite.init();
  			},
- 			removeSpirte : function(index){
- 				this.sprites[index] = null;
+ 			removeSpirte : function(sprite){
+ 				this.sprites[sprite._index] = null;
  			},
  			addPoint : function(p){
 				this.pointList.push(p);
@@ -253,12 +262,18 @@
 					if (sprite){
 						if (sprite.y < -sprite.size || sprite.y > this.parent.height){
 							if (action.autoRefresh) {
-								action.autoRefresh = false;
 								var pi=(Math.random()*6)>>0;
+								sprite.changeState('stop');
 								sprite.x = sprite.originX = this.pointList[pi].x;
 								sprite.y = sprite.originY = this.pointList[pi].y;
 								sprite.v = {x:0,y:sprite.size};
-								action.autoRefresh = true;
+								var defer = Math.random()*1000;
+								(function(sprite){
+									setTimeout(function(){	
+										sprite.changeState('run');
+									},defer);
+								})(sprite);
+								
 							}else{
 								sprites.splice(i,0);
 								i--;
