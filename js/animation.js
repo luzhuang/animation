@@ -92,7 +92,7 @@
 	 						}
 	 				}
 					if (/rotate/i.test(actionName)){
-						ctx.rotate(20/this.size*Math.PI/180);
+						ctx.rotate(action.rotate/this.size*Math.PI/180);
 						this._draw();	
 					}
 					if (/bezier/i.test(actionName)){
@@ -122,7 +122,7 @@
 						if (this.y > dest) {
 							var moveLength = this.y - dest;
 							var delta = moveLength/allLength;
-							this.ctx.globalAlpha = 1 - delta-0.1;
+							this.ctx.globalAlpha = 1-delta-0.1;
 						}else{
 							this.ctx.globalAlpha = 1;
 						}
@@ -169,8 +169,8 @@
  					height = this.height,
  					size = this.size,
 					frames = this.frames;
+				var self = this;
 				if(frames instanceof Array){
-					var self = this;
 					var frameIndex = 1;
 					var lastTime = 0;
 					function freshFrame(t){
@@ -195,7 +195,12 @@
 					}
 					requestAnimationFrame(freshFrame);
 				}else{
-					ctx.drawImage(frames,-size/2,-size/2,width,height);
+					self.clear();
+					if (self.action) {
+						ctx.drawImage(frames,-width/2,-height/2,width,height);
+					}else{
+						ctx.drawImage(frames,-size/2,-size/2,width,height);
+					}
 				}
  			},
  			_turnY : function(){
