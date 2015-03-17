@@ -1,5 +1,10 @@
-// ;(function(window,document){
-	// function init() {
+;(function(window,document){
+		try { 
+			document.createElement("canvas").getContext("2d"); 
+		} catch (e) { 
+			console.log('不支持canvas');
+			return;
+		} 
 		var requestAnimationFrame = (function(){
 		   return  window.requestAnimationFrame       || 
 		           window.webkitRequestAnimationFrame || 
@@ -77,14 +82,14 @@
 	 					this.y += v.y;
 	 					v.x += a/this.size;
 	 					this.x += v.x;
-	 					this.originX += v.x;
-	 					this.originY += v.y;
 	 				}
 	 				if (/wave/i.test(actionName)){
-	 						if (action.wave > 0)
+	 						if (action.wave > 0){
 	 							this.x = this.originX + action.swing*Math.sin((this.y-this.originY)/action.swing);
-	 						else
+	 						}
+	 						else{
 	 							this.x = this.originX - action.swing*Math.sin((this.y-this.originY)/action.swing);
+	 						}
 	 				}
 					if (/rotate/i.test(actionName)){
 						ctx.rotate(20/this.size*Math.PI/180);
@@ -398,8 +403,9 @@
 					}
 				}
 				requestAnimationFrame(_onFrame);
-				if (this._environment)
+				if (this._environment) {
 					requestAnimationFrame(_changeEnvironment);
+				}
 			},
 			stop : function(){
 				this.state = "stop";
@@ -514,6 +520,11 @@
 				}
 			}
 		}
-	// }
-	// window.addEventListener('load',init,false);
-// })(window,document);
+	window.Anim = {
+		Scene : Scene,
+		Layer : Layer,
+		Sprite : Sprite,
+		TextureAtlas : TextureAtlas,
+		LoadQueue : LoadQueue
+	};
+})(window,document);

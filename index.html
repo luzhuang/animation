@@ -7,7 +7,7 @@
 	<script src="js/animation.js"></script>
 	<script>
 		window.onload = function(){
-			var loadQueue = new LoadQueue();
+			var loadQueue = new Anim.LoadQueue();
 			loadQueue.addResource('l1','img/左侧花枝1.png');
 			// loadQueue.addResource('l2','img/左侧花枝2.png');
 			// loadQueue.addResource('l3','img/左侧花枝3.png');
@@ -18,8 +18,8 @@
 			// loadQueue.addResource('h2','img/花朵2.png');
 			loadQueue.addResource('fish','img/fish.png');
 			loadQueue.load(function(res){
-			var scene = new Scene(0,0,window.innerWidth,window.innerHeight);
-			var layer = new Layer(1).addTo(scene);
+			var scene = new Anim.Scene(0,0,window.innerWidth,window.innerHeight);
+			var layer = new Anim.Layer(1).addTo(scene);
 			layer.addDrawRect({top:0,bottom:115,left:15,right:45});
 			
 			// 	var flowerNum = 10;
@@ -52,7 +52,7 @@
 			// 	}
 				
 
-				var atlas = new TextureAtlas({
+				var atlas = new Anim.TextureAtlas({
 				    image: res['fish'],
 				    width: res['fish'].width,
 				    height: res['fish'].height,
@@ -65,14 +65,14 @@
 				        fish: {from:0,to:7}
 				    }
 				});
-				var l1 = new Sprite({
+				var l1 = new Anim.Sprite({
 					frames: res['l1'],
 					x: 0,
 				    y: 100,
 				    width: 174,
 				    height:126,
 				}).addTo(layer);
-				var fish = new Sprite({
+				var fish = new Anim.Sprite({
 				    frames: atlas.getSprite('fish'),
 				    x: 0,
 				    y: 100,
@@ -80,11 +80,8 @@
 				    height:126,
 				    interval: 50,
 				    loop: true,
-				    v:{
-				    	x:1,
-				    	y:1
-				    },
-				    action: {name:"down",autoRefresh:true}
+				    v: {x:1,y:1},
+				    action: {name:"downwave",wave:1,swing:100,autoRefresh:true}
 				}).addTo(layer);
 				// console.log(fish);
 				scene.setEnvironment(5,-5,5.5,-2.5,2000);
