@@ -95,26 +95,7 @@
 						ctx.rotate(action.rotate/this.size*Math.PI/180);
 						this._draw();	
 					}
-					if (/bezier/i.test(actionName)){
-						var action = this.action,
-							p0 = this.action.p0,
-							p1 = this.action.p1,
-							p2 = this.action.p2,
-							p3 = this.action.p3;
-						var scale = Math.random()+0.2;
-						this.action.t += 1/200;
-						if (this.action.t >= 1) {
-							this.action.p0 = {x:this.x,y:this.y};
-							this.action.p1 = {x:-scale*300,y:50+100*scale};
-							this.action.p2 = {x:scale*300,y:150+100*scale};
-							this.action.t -= 1;
-						}else{ 
-							this.x = Math.pow((1-action.t),3)*p0.x+3*action.t*Math.pow((1-action.t),2)*(p0.x+p1.x)+
-									3*Math.pow(action.t,2)*(1-action.t)*(p0.x+p2.x)+(p0.x+p3.x)*Math.pow(action.t,3);
-							this.y = Math.pow((1-action.t),3)*p0.y+3*action.t*Math.pow((1-action.t),2)*(p0.y+p1.y)+
-									3*Math.pow(action.t,2)*(1-action.t)*(p0.y+p2.y)+(p0.y+p3.y)*Math.pow(action.t,3);
-						}
-					}
+
 					if (/transparent/i.test(actionName)){
 						var opacityStart = this.action.opacityStart,
 							allLength = opacityStart,
@@ -126,20 +107,6 @@
 						}else{
 							this.ctx.globalAlpha = 1;
 						}
-					}
-					if (/turnY/i.test(actionName)){
-						if (!this.isTurn) {
-							this.turn = this._turnY();
-							this.isTurn = true;
-						}
-						this.turn();
-					}
-					if (/turnX/i.test(actionName)){
-						if (!this.isTurn) {
-							this.turn = this._turnX();
-							this.isTurn = true;
-						}
-						this.turn();
 					}
 					if (/transform/i.test(actionName)){
 						this.size += action.transform;
@@ -202,50 +169,6 @@
 						ctx.drawImage(frames,-size/2,-size/2,width,height);
 					}
 				}
- 			},
- 			_turnY : function(){
-				var action = this.action,
-	 				width = this.width,
-	 				height = this.height,
-	 				size = this.size,
-	 				ctx = this.ctx,
-	 				img = this.img;
-	 			var scale = 1;
- 				return (function(){
- 					scale *= action.turn;
-	 				this.clear();
- 					if (Math.abs(scale)<0.1){
- 						action.turn = 1/action.turn;
- 						ctx.scale(-1,1);
- 					}
- 					if (Math.abs(scale)>1){
- 						action.turn = 1/action.turn;
- 					}
-					ctx.scale(action.turn, 1);
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				});
- 			},
- 			_turnX : function(){
-				var action = this.action,
-	 				width = this.width,
-	 				height = this.height,
-	 				size = this.size,
-	 				ctx = this.ctx,
-	 				img = this.img;
-	 			var scale = 1;
- 				return (function(){
- 					scale *= action.turn;
-	 				this.clear();
- 					if (Math.abs(scale)<0.1){
- 						action.turn = 1/action.turn;
- 						ctx.scale(1,-1);
- 					}
- 					if (Math.abs(scale)>1){
- 						action.turn = 1/action.turn;
- 					}
-					ctx.scale(1, action.turn);
-					ctx.drawImage(img,-width/2,-height/2,width,height);
-				});
  			},
  			getLayer : function(){
  				return this.parent;
