@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body style="background-color:black">
+    <script>
+        (function() {
+    var snowFallTimer, winWidth, winHeight, clg, canvas, ctx,
+        coords = [],
+        canvases = [],
+        lastTime = 0;
+
+    requestAnimationFrame = 
+        window.requestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        function (callback) {
+            var currentTime = new Date().getTime();
+            var timer = Math.max(0, 16 - (currentTime - lastTime));
+            snowFallTimer = setTimeout(function() {
+                callback(currentTime + timer);
+            }, timer);
+            lastTime = currentTime + timer;
+        };
+    cancelAnimationFrame = 
+        window.cancelAnimationFrame ||
+        window.mozCancelAnimationFrame ||
+        window.webkitCancelAnimationFrame ||
+        window.msCancelAnimationFrame ||
+        window.oCancelAnimationFrame ||
+        function () {
+            clearTimeout(snowFallTimer);
+        };
+
+    function snowFall () {
+        
+        if (!(this instanceof snowFall)) {
+            throw new Error('please use new() create instance');
+            return;
+        }
+
+        if (canvasSupported.call(this) == false) {
+            return;
+        }
+        this.status = 0;
+        this.start();
+    }
+
+    function canvasSupported() {
+        var canvas = document.createElement('canvas');
+        this.canvas = canvas;
+        var element = document.createElement('x');
+        element.style.cssText = 'pointer-events:auto';
+        return !!(canvas.getContext && canvas.getContext('2d') && (element.style.pointerEvents === 'auto'));
+    }
+
+    snowFall.prototype.start = function () {
+        var self = this;
+        if (this.status === 1) {
+            return false;
+        }
+        this.status = 1;
+        this.snowCanvas();
+        this.createFlakes();
+
+        requestAnimationFrame(drawSnow);
+    }
+
+    snowFall.prototype.stop = function () {
+        if (this.status === 2) return;
+        this.status = 2;
+
+        cancelAnimationFrame();
+    }
+
+    snowFall.prototype.snowCanvas = function() {
+        var snowcanvas = this.canvas;
+        winWidth = window.innerWidth;
+        winHeight = window.innerHeight;
+        snowcanvas.id = 'J_snowfall';
+        snowcanvas.width = winWidth;
+        snowcanvas.height = winHeight;
+        snowcanvas.setAttribute('style', 'position: fixed; top: 0; left: 0; z-index: 9000; pointer-events: none;');
+        document.body.appendChild(snowcanvas);
+        canvas = snowcanvas;
+        ctx = snowcanvas.getContext('2d');
+        ctx.strokeStyle = "none";
+        window.onresize = function() {
+            winWidth = window.innerWidth;
+            winHeight = window.innerHeight;
+            snowcanvas.width = winWidth;
+            snowcanvas.height = winHeight;
+            flakeCount = winWidth * winHeight / 6000;
+            snowFallIns.createFlakes();
+         }
+    }
+
+    // 鍒涘缓闆姳
+    snowFall.prototype.createFlakes = function() {
+        var ncanvas, nctx, ctxStyle, wh,
+            color = '#FFF',
+            soft = [.45, .55, .8, .9, 1];
+            wh = [40, 50, 60, 80, 100];
+        for (var i = 0; i < 5; i++) {
+            ncanvas = document.createElement("canvas");
+            ncanvas.width = wh[i];
+            ncanvas.height = wh[i];
+            nctx = ncanvas.getContext('2d');
+            
+            nctx.font = wh[i] / 2 + 'px sumson';
+            ctxStyle = nctx.createRadialGradient(wh[i]/2, wh[i]/2, 0, wh[i]/2, wh[i]/2, wh[i]/2);
+            ctxStyle.addColorStop(0, color);
+            ctxStyle.addColorStop(.1, color);
+            ctxStyle.addColorStop(.85, color2RGBA(color, soft[i]));
+            ctxStyle.addColorStop(1, color2RGBA(color, 0));
+
+            nctx.fillStyle = ctxStyle;
+            nctx.fillText('*', wh[i] / 2, wh[i] / 2);
+            canvases.push(ncanvas);
+        }
+        clg = ctx.createLinearGradient(0, 0, 0, winWidth);
+        setCoords();
+    }
+
+    function setCoords() {
+        var canvasIndex;
+        var halfx = (winWidth - 940) / 2;
+        flakeCount = winWidth * winHeight / 6000;
+        for (var i = 0; i < flakeCount; i++) {
+            canvasIndex = 1;
+            var areax = Math.floor(Math.random() * 10) >= 5 ? halfx + 940 : halfx;
+            var x = areax < 940 ? Math.random() * areax : 940 + halfx + Math.random() * halfx;
+            coords[i] = [x, Math.random() * winHeight, canvasIndex];
+        }
+    }
+
+    function drawSnow(timestampe) {
+        ctx.fillStyle = clg, 
+        ctx.clearRect(0, 0, winWidth, winHeight), 
+        ctx.beginPath();
+
+        for (var i = 0; i < flakeCount; i++) {
+            var x = coords[i][0];
+            var y = coords[i][1];
+            var ncanvas = canvases[coords[i][2]];
+            ctx.drawImage(ncanvas, x, y);
+        }
+        ctx.fill();
+        setRadian();
+        requestAnimationFrame(drawSnow);
+    }
+
+    function color2RGBA(color, filter) {
+        var colorR, colorG, colorB;
+        color = color.replace(/^s*#|s*$/g, "");
+        color.length === 3 && (color = color.replace(/([0-9a-fA-F])/g, "$1$1"));
+        colorR = parseInt(color.substr(0, 2), 16);
+        colorG = parseInt(color.substr(2, 2), 16);
+        colorB = parseInt(color.substr(4, 2), 16);
+        return "rgba(" + colorR + ", " + colorG + ", " + colorB + ", " + filter + ")"
+    }
+
+    function setRadian() {
+        var a, d, e, x, areax, coord, halfx;
+        p = .01;
+        d = Math.sin(p);
+        halfx = (winWidth - 940) / 2;
+        for (var i = 0; i < flakeCount; i++) {
+            coord = coords[i];
+            e = Math.sin(4 * p + i);
+            coord[1] += (coord[2] / 2 + (2 + e)) / 2;
+            coord[0] += 6 * (d + e / 2) / (10 / coord[2]);
+            areax = Math.floor(Math.random() * 10) >= 5 ? halfx + 940 : halfx;
+            x = areax < 940 ? Math.random() * areax : 940 + halfx + Math.random() * halfx;
+            coord[1] > winHeight && (
+                coord[1] = -20,
+                coord[0] = x
+            );
+            if ((coord[0] > halfx && coord[0] < 940 + halfx) || coord[0] > winWidth || coord[0] < -20) {
+                // d > 0 ? coord[0] = -20 : coord[0] = winWidth - 20;
+                coord[0] > winWidth ? coord[0] = -20 : coord[0] = winWidth - 20;
+            }
+            coords[i] = coord;
+        }
+    }
+    // test
+    var snowFallIns = new snowFall();
+})()
+    </script>
+</body>
+</html>

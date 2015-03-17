@@ -11,20 +11,24 @@
 		           };
  		})();
 
- 		function Sprite(img,x,y,width,height,scale,action){
+ 		function Sprite(spriteData){
  			this.canvas = document.createElement('canvas');
 			this.ctx = this.canvas.getContext('2d');
- 			this.x = this.originX = x;
- 			this.y = this.originY = y;
- 			this.width = this.originWidth = width;	
- 			this.height = this.originHeight = height;
+			this.frames = spriteData.frames || [];
+ 			this.x = this.originX = spriteData.x || 0;
+ 			this.y = this.originY = spriteData.y || 0;
+ 			this.width = this.originWidth = spriteData.width || 0;	
+ 			this.height = this.originHeight = spriteData.height || 0;
+ 			this.v = spriteData.v || {x:0,y:0};
+ 			this.originV = JSON.parse(JSON.stringify(this.v));
+ 			this.defer = spriteData.defer || 0;
+ 			this.interval = spriteData.interval || 16;
+ 			this.loop = spriteData.loop || false;
+ 			this.action = spriteData.action || null;
+ 			this.parent = {};
  			this.a = 0;
  			this.g = 0;
- 			this.img = img;
- 			this.action = action || null;
- 			this.parent = {};
  			this._index = 0;
- 			this.v = {x:0,y:0};
  			this.state = null;
  			this.init();
  		}
@@ -36,19 +40,21 @@
  					x = this.x,
  					y = this.y,
  					width = this.width,
- 					height = this.height,
-					img = this.img;
+ 					height = this.height;
 				this.size = this.originSize = Math.sqrt(width*width+height*height);
 		 		this.canvas.width = this.size;
 	 			this.canvas.height= this.size;	
 	 			ctx.translate(this.size/2,this.size/2);
-	 			this.v = {x:0,y:this.size};
-	 			var that = this;
-	 			var defer = this.action ? Math.random()*5000 : 0;
-	 			setTimeout(function(){
-	 				that._draw();
-	 				that.state = "run";
-	 			},defer);
+	 			if(this.defer){
+	 				var self = this;
+		 			setTimeout(function(){
+		 				self._draw();
+		 				self.state = "run";
+		 			},defer);
+		 		}else{
+		 			this._draw();
+		 			this.state = "run";
+		 		}
  			},
  			move : function() {
  				if (this.state != 'run' || !this.action)
@@ -62,98 +68,129 @@
 				var a = this.a = this.parent.a,
 					g = this.g = this.parent.g,
 					ctx = this.ctx;
- 				if (/down/i.test(actionName)){
- 					v.y += g/this.size;
- 					this.y += v.y/40;
- 					v.x += a/this.size;
- 					this.x += v.x/40;
- 					this.originX += v.x/40;
- 				}
- 				if (/wave/i.test(actionName)){
- 						if (action.wave > 0)
- 							this.x = this.originX + action.swing*Math.sin((this.y-this.originY)/action.swing);
- 						else
- 							this.x = this.originX - action.swing*Math.sin((this.y-this.originY)/action.swing);
- 				}
-				if (/rotate/i.test(actionName)){
-					ctx.rotate(20/this.size*Math.PI/180);
-					this._draw();	
-				}
-				if (/bezier/i.test(actionName)){
-					var action = this.action,
-						p0 = this.action.p0,
-						p1 = this.action.p1,
-						p2 = this.action.p2,
-						p3 = this.action.p3;
-					var scale = Math.random()+0.2;
-					this.action.t += 1/200;
-					if (this.action.t >= 1) {
-						this.action.p0 = {x:this.x,y:this.y};
-						this.action.p1 = {x:-scale*300,y:50+100*scale};
-						this.action.p2 = {x:scale*300,y:150+100*scale};
-						this.action.t -= 1;
-					}else{ 
-						this.x = Math.pow((1-action.t),3)*p0.x+3*action.t*Math.pow((1-action.t),2)*(p0.x+p1.x)+
-								3*Math.pow(action.t,2)*(1-action.t)*(p0.x+p2.x)+(p0.x+p3.x)*Math.pow(action.t,3);
-						this.y = Math.pow((1-action.t),3)*p0.y+3*action.t*Math.pow((1-action.t),2)*(p0.y+p1.y)+
-								3*Math.pow(action.t,2)*(1-action.t)*(p0.y+p2.y)+(p0.y+p3.y)*Math.pow(action.t,3);
+
+				if (typeof action === 'function'){
+					action.call(this);
+				}else{
+	 				if (/down/i.test(actionName)){
+	 					v.y += g/this.size;
+	 					this.y += v.y;
+	 					v.x += a/this.size;
+	 					this.x += v.x;
+	 					this.originX += v.x;
+	 					this.originY += v.y;
+	 				}
+	 				if (/wave/i.test(actionName)){
+	 						if (action.wave > 0)
+	 							this.x = this.originX + action.swing*Math.sin((this.y-this.originY)/action.swing);
+	 						else
+	 							this.x = this.originX - action.swing*Math.sin((this.y-this.originY)/action.swing);
+	 				}
+					if (/rotate/i.test(actionName)){
+						ctx.rotate(20/this.size*Math.PI/180);
+						this._draw();	
 					}
-				}
-				if (/transparent/i.test(actionName)){
-					var opacityStart = this.action.opacityStart,
-						allLength = opacityStart,
-						dest = this.parent.parent.height - opacityStart;
-					if (this.y > dest) {
-						var moveLength = this.y - dest;
-						var delta = moveLength/allLength;
-						this.ctx.globalAlpha = 1 - delta-0.1;
-					}else{
-						this.ctx.globalAlpha = 1;
+					if (/bezier/i.test(actionName)){
+						var action = this.action,
+							p0 = this.action.p0,
+							p1 = this.action.p1,
+							p2 = this.action.p2,
+							p3 = this.action.p3;
+						var scale = Math.random()+0.2;
+						this.action.t += 1/200;
+						if (this.action.t >= 1) {
+							this.action.p0 = {x:this.x,y:this.y};
+							this.action.p1 = {x:-scale*300,y:50+100*scale};
+							this.action.p2 = {x:scale*300,y:150+100*scale};
+							this.action.t -= 1;
+						}else{ 
+							this.x = Math.pow((1-action.t),3)*p0.x+3*action.t*Math.pow((1-action.t),2)*(p0.x+p1.x)+
+									3*Math.pow(action.t,2)*(1-action.t)*(p0.x+p2.x)+(p0.x+p3.x)*Math.pow(action.t,3);
+							this.y = Math.pow((1-action.t),3)*p0.y+3*action.t*Math.pow((1-action.t),2)*(p0.y+p1.y)+
+									3*Math.pow(action.t,2)*(1-action.t)*(p0.y+p2.y)+(p0.y+p3.y)*Math.pow(action.t,3);
+						}
 					}
-				}
-				if (/turnY/i.test(actionName)){
-					if (!this.isTurn) {
-						this.turn = this._turnY();
-						this.isTurn = true;
+					if (/transparent/i.test(actionName)){
+						var opacityStart = this.action.opacityStart,
+							allLength = opacityStart,
+							dest = this.parent.parent.height - opacityStart;
+						if (this.y > dest) {
+							var moveLength = this.y - dest;
+							var delta = moveLength/allLength;
+							this.ctx.globalAlpha = 1 - delta-0.1;
+						}else{
+							this.ctx.globalAlpha = 1;
+						}
 					}
-					this.turn();
-				}
-				if (/turnX/i.test(actionName)){
-					if (!this.isTurn) {
-						this.turn = this._turnX();
-						this.isTurn = true;
+					if (/turnY/i.test(actionName)){
+						if (!this.isTurn) {
+							this.turn = this._turnY();
+							this.isTurn = true;
+						}
+						this.turn();
 					}
-					this.turn();
-				}
-				if (/transform/i.test(actionName)){
-					this.size += action.transform;
-					if (this.size < this.originSize/2 || this.size > this.originSize*1.50)
-						action.transform = -action.transform;
+					if (/turnX/i.test(actionName)){
+						if (!this.isTurn) {
+							this.turn = this._turnX();
+							this.isTurn = true;
+						}
+						this.turn();
+					}
+					if (/transform/i.test(actionName)){
+						this.size += action.transform;
+						if (this.size < this.originSize/2 || this.size > this.originSize*1.50)
+							action.transform = -action.transform;
+					}
 				}
  			},
  			changeState : function(state){
  				this.state = state;
+ 				return this;
  			},
  			clear : function(){
  				var ctx = this.ctx,
  				size = this.size;
  				ctx.clearRect(-size,-size,size*2,size*2);
+ 				return this;
  			},
  			changeLayer : function(index){
 				this.parent.removeSpirte(this);
 				this.parent.parent.layers[index].addSprite(this);
+				return this;
  			},
  			_draw : function(){
  				var ctx = this.ctx,
  					width = this.width,
  					height = this.height,
  					size = this.size,
-					img = this.img;
-				this.clear();
- 				if (this.action) {
-					ctx.drawImage(img,-width/2,-height/2,width,height);
+					frames = this.frames;
+				if(frames instanceof Array){
+					var self = this;
+					var frameIndex = 1;
+					var lastTime = 0;
+					function freshFrame(t){
+						if (t - lastTime >= self.interval) {
+							lastTime = t;
+							var frames = self.frames[frameIndex++];
+							self.clear();
+			 				if (self.action) {
+								ctx.drawImage(frames.image,frames.rect.x,frames.rect.y,frames.rect.width,frames.rect.height,-width/2,-height/2,width,height);
+							}else{
+								ctx.drawImage(frames.image,frames.rect.x,frames.rect.y,frames.rect.width,frames.rect.height,-size/2,-size/2,width,height);
+							}
+							if (frameIndex >= self.frames.length) {
+								if (self.loop) {
+									frameIndex = 1;
+								}else{
+									return;
+								}
+							}
+						}
+						requestAnimationFrame(freshFrame);
+					}
+					requestAnimationFrame(freshFrame);
 				}else{
-					ctx.drawImage(img,-size/2,-size/2,width,height);
+					ctx.drawImage(frames,-size/2,-size/2,width,height);
 				}
  			},
  			_turnY : function(){
@@ -202,13 +239,17 @@
  			},
  			getLayer : function(){
  				return this.parent;
+ 			},
+ 			addTo : function(layer){
+ 				layer.addSprite(this);
+ 				return this;
  			}
  		};
 
  		function Layer(index){
  			this.sprites  = [];
  			this.rectList = [];
- 			this.index = index;
+ 			this.index = index || 0;
  			this.a = 0;
  			this.g = 0;
  		}
@@ -229,18 +270,25 @@
  				 	this.sprites.push(sprite);
  				}
 				sprite.parent = this;
+				return this;
  			},
  			removeSpirte : function(sprite){
  				this.sprites[sprite._index] = null;
+ 				return this;
  			},
  			addDrawRect : function(p){
 				this.rectList.push(p);
+				return this;
+			},
+			addTo : function(scene){
+				scene.addLayer(this);
+				return this;
 			},
 			_addSpritesToLayer : function(ctx){
 				for (var i=0,l=this.sprites.length;i<l;i++){
 					var sprite = this.sprites[i];
 					if (sprite) {
-						var that = this;
+						var self = this;
 						(function(sprite){
 							ctx.drawImage(sprite.canvas,sprite.x,sprite.y,sprite.size,sprite.size);
 						})(sprite);
@@ -263,7 +311,7 @@
 								sprite.changeState('stop');
 								sprite.x = sprite.originX = randomX;
 								sprite.y = sprite.originY = randomY;
-								sprite.v = {x:0,y:sprite.size};
+								sprite.v = JSON.parse(JSON.stringify(sprite.originV));
 								var defer = Math.random()*1000;
 								(function(sprite){
 									setTimeout(function(){	
@@ -319,19 +367,19 @@
 			},
 			start : function(){
 				var ctx = this.ctx;
-				var that = this;
+				var self = this;
 				var lastTime = 0;
 				var environment = this._environment;
 				this.state = "start";
 				function _changeEnvironment(t){
-					if (that.state == "start") {
+					if (self.state == "start") {
 						if (t - lastTime > environment.interval) {
-							that.a = Math.random()*(environment.xMax-environment.xMin)+environment.xMin;
-							that.g = Math.random()*(environment.yMax-environment.yMin)+environment.yMin;
-							for (var i=0;i<that.layers.length;++i){
-								if (that.layers[i]) {
-									that.layers[i].a = that.a*that.layers[i].index;
-									that.layers[i].g = that.g*that.layers[i].index;
+							self.a = Math.random()*(environment.xMax-environment.xMin)+environment.xMin;
+							self.g = Math.random()*(environment.yMax-environment.yMin)+environment.yMin;
+							for (var i=0;i<self.layers.length;++i){
+								if (self.layers[i]) {
+									self.layers[i].a = self.a*self.layers[i].index;
+									self.layers[i].g = self.g*self.layers[i].index;
 								}
 							}
 							lastTime = t;
@@ -340,10 +388,10 @@
 					requestAnimationFrame(_changeEnvironment);
 				}
 				function _onFrame(){				
-					if (that.state == "start") {
-						ctx.clearRect(0,0,that.width,that.height);
-						for (var index in that.layers){
-							var layer = that.layers[index]
+					if (self.state == "start") {
+						ctx.clearRect(0,0,self.width,self.height);
+						for (var index in self.layers){
+							var layer = self.layers[index]
 							layer._onFrame(ctx);
 						}
 						requestAnimationFrame(_onFrame);
@@ -380,10 +428,60 @@
 
 		TextureAtlas.prototype = {
 			_parseTextureFrames : function(atlasData){
+				var frameData = atlasData.frames;
+				if(!frameData) return null;
 
+				var frames = [], obj;
+
+				var frameWidth = frameData.frameWidth;
+				var frameHeight = frameData.frameHeight;
+				var cols = atlasData.width / frameWidth | 0;
+				var rows = atlasData.height / frameHeight | 0;
+				var numFrames  = frameData.numFrames || cols*rows;
+				for(var i = 0;i < numFrames; i++){
+					frames[i] = {
+						image: atlasData.image,
+						rect: {x:i%cols*frameWidth,y:(i/cols|0)*frameHeight,width:frameWidth,height:frameHeight}
+					}
+				}
+				return frames;
 			},
 			_parseTextureSprites : function(atlasData,frames){
+				var spriteData = atlasData.sprites;
+				if(!spriteData) return null;
 
+				var sprites = {}, sprite, spriteFrames;
+				for (var s in spriteData){
+					sprite = spriteData[s];
+					if(typeof sprite === 'number'){
+						spriteFrames = this._translateSpriteFrame(frames[sprite]);
+					}else{
+						spriteFrames = [];
+						for (var i = sprite.from;i <= sprite.to; i++){
+							spriteFrames[i - sprite.from] = this._translateSpriteFrame(frames[i],sprite[i]);
+						}
+					}
+					sprites[s] = spriteFrames;
+				}
+				return sprites;
+			},
+			_translateSpriteFrame : function(frameObj,spriteObj){
+				var spriteFrame = {
+			        image: frameObj.image,
+			        rect: frameObj.rect
+			    };
+
+			    if(spriteObj){
+			        spriteFrame.name = spriteObj.name || null;
+			        spriteFrame.duration = spriteObj.duration || 0;
+			        spriteFrame.stop = !!spriteObj.stop;
+			        spriteFrame.next = spriteObj.next || null;
+			    }
+			    return spriteFrame;
+			},
+			getSprite : function(id){
+				var sprites = this._sprites;
+       			return sprites && sprites[id];
 			}
 		}
 
@@ -404,11 +502,11 @@
 					var img = new Image();
 					img.src = this.resourceList[id];
 					res[id] = img;
-					var that = this;
+					var self = this;
 					(function(id){
 						img.onload = function(){
 							loaded++;
-							if (loaded == that.resourceNum) {
+							if (loaded == self.resourceNum) {
 								callback(res);
 							}
 						}

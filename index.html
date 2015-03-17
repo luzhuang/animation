@@ -9,49 +9,85 @@
 		window.onload = function(){
 			var loadQueue = new LoadQueue();
 			loadQueue.addResource('l1','img/左侧花枝1.png');
-			loadQueue.addResource('l2','img/左侧花枝2.png');
-			loadQueue.addResource('l3','img/左侧花枝3.png');
-			loadQueue.addResource('r1','img/右侧花枝1.png');
-			loadQueue.addResource('r2','img/右侧花枝2.png');
-			loadQueue.addResource('r3','img/右侧花枝3.png');
-			loadQueue.addResource('h1','img/花朵1.png');
-			loadQueue.addResource('h2','img/花朵2.png');
+			// loadQueue.addResource('l2','img/左侧花枝2.png');
+			// loadQueue.addResource('l3','img/左侧花枝3.png');
+			// loadQueue.addResource('r1','img/右侧花枝1.png');
+			// loadQueue.addResource('r2','img/右侧花枝2.png');
+			// loadQueue.addResource('r3','img/右侧花枝3.png');
+			// loadQueue.addResource('h1','img/花朵1.png');
+			// loadQueue.addResource('h2','img/花朵2.png');
+			loadQueue.addResource('fish','img/fish.png');
 			loadQueue.load(function(res){
-				var scene = new Scene(0,0,window.innerWidth,window.innerHeight);
-				// var layers = [];
-				// 	layers[1] = new Layer(1),
-				// 	layers[2] = new Layer(2),
-				// 	layers[3] = new Layer(3);
-				// for (var i=1;i<=3;++i){
-				// 	scene.addLayer(layers[i]);
-				// }
-				// for (var i=1;i<=3;++i){
-				// 	var ri = 'r'+i,
-				// 		li = 'l'+i;
-				// 	var l = new Sprite(res[li],0,50*(i-1),res[li].width/2,res[li].height/2),
-				// 		r = new Sprite(res[ri],window.innerWidth-res[ri].width/2,50*(i-1),res[ri].width/2,res[ri].height/2);
-				// 	layers[i].addSprite(l);
-				// 	layers[i].addDrawRect({top:l.y+40,bottom:l.y+115,left:l.x+15,right:l.x+45});
-				// 	layers[i].addSprite(r);
-				// 	layers[i].addDrawRect({top:r.y+20,bottom:r.y+115,left:r.x+15,right:r.x+50});
-				// }
-				// var flowerNum = 10;
-				// for (var i=0;i<flowerNum;++i){
-				// 	var hi = 'h'+((Math.random()*2+1)>>0);
-				// 	var layeri = (Math.random()*3+1)>>0;
-				// 	var transform = Math.random()*0.4-0.2;
-				// 	var scale = Math.random()*0.5+0.5;
-				// 	var wave = Math.random()*2-1;
-				// 	var pi=(Math.random()*layers[layeri].rectList.length)>>0;
-				// 	var drawRect = layers[layeri].rectList[pi];
-				// 	var randomY = Math.random()*(drawRect.bottom-drawRect.top)+drawRect.top;
-				// 	var randomX = Math.random()*(drawRect.right-drawRect.left)+drawRect.left;
-				// 	var swing = Math.random()*10+40;
-				// 	var h = new Sprite(res[hi],randomX,randomY,res[hi].width,res[hi].height,scale,
-				// 		{name:'downwavetransparentrotatetransform',wave:wave,swing:swing,transform:transform,opacityStart:200,autoRefresh:true});
-				// 	layers[layeri].addSprite(h);
-				// }
-				// // scene.setEnvironment(5,-5,5.5,-2.5,2000);
+			var scene = new Scene(0,0,window.innerWidth,window.innerHeight);
+			var layer = new Layer(1).addTo(scene);
+			layer.addDrawRect({top:0,bottom:115,left:15,right:45});
+			
+			// 	var flowerNum = 10;
+			// 	for (var i=0;i<flowerNum;++i){
+			// 		var hi = 'h'+((Math.random()*2+1)>>0);
+			// 		var layeri = (Math.random()*3+1)>>0;
+			// 		var transform = Math.random()*0.4-0.2;
+			// 		var wave = Math.random()*2-1;
+			// 		var pi=(Math.random()*layers[layeri].rectList.length)>>0;
+			// 		var drawRect = layers[layeri].rectList[pi];
+			// 		var randomY = Math.random()*(drawRect.bottom-drawRect.top)+drawRect.top;
+			// 		var randomX = Math.random()*(drawRect.right-drawRect.left)+drawRect.left;
+			// 		var swing = Math.random()*10+40;
+			// 		var h = new Sprite({
+			// 			img: res[hi],
+			// 			x: randomX,
+			// 			y: randomY,
+			// 			width: res[hi].width,
+			// 			height: res[hi].height,
+			// 			action: {
+			// 				name:'downwavetransparentrotatetransform',
+			// 				wave:wave,
+			// 				swing:swing,
+			// 				transform:transform,
+			// 				opacityStart:200,
+			// 				autoRefresh:true
+			// 			}
+			// 		});
+			// 		layers[layeri].addSprite(h);
+			// 	}
+				
+
+				var atlas = new TextureAtlas({
+				    image: res['fish'],
+				    width: res['fish'].width,
+				    height: res['fish'].height,
+				    frames: {
+				        frameWidth: 174,
+				        frameHeight: 126,
+				        numFrames: 12
+				    },
+				    sprites: {
+				        fish: {from:0,to:7}
+				    }
+				});
+				var l1 = new Sprite({
+					frames: res['l1'],
+					x: 0,
+				    y: 100,
+				    width: 174,
+				    height:126,
+				}).addTo(layer);
+				var fish = new Sprite({
+				    frames: atlas.getSprite('fish'),
+				    x: 0,
+				    y: 100,
+				    width: 174,
+				    height:126,
+				    interval: 50,
+				    loop: true,
+				    v:{
+				    	x:1,
+				    	y:1
+				    },
+				    action: {name:"down",autoRefresh:true}
+				}).addTo(layer);
+				// console.log(fish);
+				scene.setEnvironment(5,-5,5.5,-2.5,2000);
 				scene.start();
 			});
 		}
