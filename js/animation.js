@@ -77,17 +77,17 @@
 				if (typeof action === 'function'){
 					action.call(this);
 				}else{
-	 				if (/down/i.test(actionName)){
+	 				if (/move/i.test(actionName)){
 	 					v.y += g/this.size;
 	 					this.y += v.y;
 	 					v.x += a/this.size;
 	 					this.x += v.x;
 	 				}
 	 				if (/wave/i.test(actionName)){
-	 						if (action.wave > 0){
+	 						if (action.wave == "y+"){
 	 							this.x = this.originX + action.swing*Math.sin((this.y-this.originY)/action.swing);
 	 						}
-	 						else{
+	 						if (action.wave == "y-"){
 	 							this.x = this.originX - action.swing*Math.sin((this.y-this.originY)/action.swing);
 	 						}
 	 				}
@@ -169,6 +169,10 @@
 						ctx.drawImage(frames,-size/2,-size/2,width,height);
 					}
 				}
+ 			},
+ 			turn : function(){
+ 				var ctx = this.ctx;
+ 				ctx.scale(-1,1);
  			},
  			getLayer : function(){
  				return this.parent;
@@ -352,7 +356,13 @@
 				this._environment.yMax = yMax || 0;
 				this._environment.yMin = yMin || 0;
 				this._environment.interval = interval || 0;
-			}
+			},
+ 			getImageData : function(){
+ 				var ctx = this.ctx,
+ 					width = this.width;
+ 					height = this.height;
+ 				return ctx.getImageData(0,0,width,height);
+ 			}
 		};
 		
 		function TextureAtlas(atlasData){
